@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://dollarpowercalc.com
+
+# Sitemaps
+Sitemap: https://dollarpowercalc.com/sitemap.xml
