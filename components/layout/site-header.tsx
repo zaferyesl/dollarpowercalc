@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 const nav = [
+  { href: "/blog", label: "Blog" },
   { href: "/tools/inflation-calculator-by-year", label: "Inflation" },
   { href: "/calculators/dividend-snowball", label: "Dividend Snowball" },
 ];

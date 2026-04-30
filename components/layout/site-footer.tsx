@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 const links = [
+  { href: "/blog", label: "Blog" },
   { href: "/tools/inflation-calculator-by-year", label: "Inflation calculator by year" },
   { href: "/calculators/dividend-snowball", label: "Dividend snowball" },
 ];
