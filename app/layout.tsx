@@ -28,10 +28,13 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} | US financial calculators & CPI intelligence`,
+    default: "WealthTrace | Wealth intelligence for modern US portfolios",
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_TAGLINE,
+  verification: {
+    google: "JCX0SEies1hfwiO4oiU8xBljpX8tllSNZeV91RHjv_o",
+  },
   applicationName: SITE_NAME,
   alternates: {
     canonical: SITE_URL,
