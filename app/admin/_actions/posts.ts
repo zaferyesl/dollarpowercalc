@@ -15,6 +15,15 @@ async function assertAdmin() {
 
 const BUCKET = "blog-covers";
 
+function publishedAtFromForm(publishedRaw: FormDataEntryValue | null): string | null {
+  if (typeof publishedRaw !== "string" || publishedRaw.trim() === "") return null;
+  const d = new Date(publishedRaw);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error("Invalid publish date — clear the field or pick a valid date/time.");
+  }
+  return d.toISOString();
+}
+
 function publicCoverUrl(key: string) {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   return `${base}/storage/v1/object/public/${BUCKET}/${key}`;
@@ -83,9 +92,7 @@ export async function createPost(formData: FormData) {
   const contentRaw = String(formData.get("content") ?? "");
   const content = sanitizeBlogHtml(contentRaw);
 
-  const publishedRaw = formData.get("published_at");
-  const published_at =
-    typeof publishedRaw === "string" && publishedRaw.length > 0 ? new Date(publishedRaw).toISOString() : null;
+  const published_at = publishedAtFromForm(formData.get("published_at"));
 
   const coverFile = formData.get("cover") as File | null;
   let cover_image: string | null = null;
@@ -141,9 +148,7 @@ export async function updatePost(id: string, formData: FormData) {
   const contentRaw = String(formData.get("content") ?? "");
   const content = sanitizeBlogHtml(contentRaw);
 
-  const publishedRaw = formData.get("published_at");
-  const published_at =
-    typeof publishedRaw === "string" && publishedRaw.length > 0 ? new Date(publishedRaw).toISOString() : null;
+  const published_at = publishedAtFromForm(formData.get("published_at"));
 
   const coverFile = formData.get("cover") as File | null;
   let cover_image = String(formData.get("cover_image_url") ?? "").trim() || null;
