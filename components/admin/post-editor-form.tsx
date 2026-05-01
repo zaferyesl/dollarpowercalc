@@ -30,8 +30,8 @@ export function PostEditorForm({ mode, post }: Props) {
   const [slug, setSlug] = useState(post?.slug ?? "");
   const [description, setDescription] = useState(post?.description ?? "");
   const [tags, setTags] = useState((post?.tags ?? []).join(", "));
-  const [publishedAt, setPublishedAt] = useState(
-    post?.published_at ? toLocalInput(post.published_at) : "",
+  const [publishedAt, setPublishedAt] = useState(() =>
+    post?.published_at ? toLocalInput(post.published_at) : mode === "create" ? nowDatetimeLocal() : "",
   );
   const [coverUrl, setCoverUrl] = useState(post?.cover_image ?? "");
   const [body, setBody] = useState(post?.content ?? "<p></p>");
@@ -109,7 +109,11 @@ export function PostEditorForm({ mode, post }: Props) {
               value={publishedAt}
               onChange={(e) => setPublishedAt(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Leave empty for draft (hidden from public blog).</p>
+            <p className="text-xs text-muted-foreground">
+              Uses your device&apos;s local clock (Windows bölgesi İstanbul ise Türkiye saati). New posts default to
+              &quot;now&quot;; clear the field for a draft. On save, the time is sent to the server as UTC so it
+              doesn&apos;t shift.
+            </p>
           </div>
         </div>
         <div className="space-y-2">
@@ -147,7 +151,14 @@ export function PostEditorForm({ mode, post }: Props) {
                   fd.set("slug", slug);
                   fd.set("description", description);
                   fd.set("tags", tags);
-                  if (publishedAt) fd.set("published_at", publishedAt);
+                  if (publishedAt.trim()) {
+                    const when = new Date(publishedAt.trim());
+                    if (Number.isNaN(when.getTime())) {
+                      setError("Invalid publish date.");
+                      return;
+                    }
+                    fd.set("published_at", when.toISOString());
+                  }
                   if (coverUrl) fd.set("cover_image_url", coverUrl);
                   fd.set("content", body);
 
@@ -183,6 +194,13 @@ export function PostEditorForm({ mode, post }: Props) {
 function toLocalInput(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** `datetime-local` string in the browser's local timezone (e.g. Turkey if OS TZ is İstanbul). */
+function nowDatetimeLocal() {
+  const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

@@ -14,6 +14,7 @@ import { formatUsd } from "@/lib/format";
 import type { CpiResolution } from "@/lib/data/fred-cpi";
 
 import type { InflationValuePoint } from "./inflation-value-chart";
+import { useYearField } from "./use-year-field";
 
 type Props = {
   yearlyIndexByYear: Record<number, number>;
@@ -46,33 +47,33 @@ export function InflationCalculatorClient({ yearlyIndexByYear, source }: Props) 
   const [activeTab, setActiveTab] = useState("buying-power");
 
   const [cashAmountUsd, setCashAmountUsd] = useState<number>(100);
-  const [referenceYear, setReferenceYear] = useState<number>(() => clampYear(1980, minYear, latestIndexYear));
+  const buyingYearField = useYearField(1980, minYear, latestIndexYear);
+  const referenceYear = buyingYearField.effectiveYear;
 
   const [salaryUsd, setSalaryUsd] = useState<number>(55_000);
-  const [salaryBaselineYear, setSalaryBaselineYear] = useState<number>(() =>
-    clampYear(2014, minYear, latestIndexYear),
-  );
+  const salaryYearField = useYearField(2014, minYear, latestIndexYear);
+  const salaryBaselineYear = salaryYearField.effectiveYear;
 
   const buyingPowerSummary = useMemo(() => {
     return purchasingPowerToday({
       amount: cashAmountUsd,
-      indexStartYear: clampYear(referenceYear, minYear, latestIndexYear),
+      indexStartYear: referenceYear,
       indexEndYear: latestIndexYear,
       yearlyIndexByYear,
     });
-  }, [cashAmountUsd, referenceYear, yearlyIndexByYear, latestIndexYear, minYear]);
+  }, [cashAmountUsd, referenceYear, yearlyIndexByYear, latestIndexYear]);
 
   const salarySummary = useMemo(() => {
     return inflationAdjustedSalary({
       salaryUsd,
-      pastYear: clampYear(salaryBaselineYear, minYear, latestIndexYear),
+      pastYear: salaryBaselineYear,
       currentYear: latestIndexYear,
       yearlyIndexByYear,
     });
-  }, [salaryUsd, salaryBaselineYear, yearlyIndexByYear, latestIndexYear, minYear]);
+  }, [salaryUsd, salaryBaselineYear, yearlyIndexByYear, latestIndexYear]);
 
   const nominalStackTimeline: InflationValuePoint[] = useMemo(() => {
-    const start = clampYear(referenceYear, minYear, latestIndexYear);
+    const start = referenceYear;
     const cpiBase = yearlyIndexByYear[start];
     if (!(typeof cpiBase === "number") || !(cpiBase > 0)) return [];
 
@@ -85,7 +86,7 @@ export function InflationCalculatorClient({ yearlyIndexByYear, source }: Props) 
         nominalValueUsd: cashAmountUsd * (level / cpiBase),
       };
     });
-  }, [cashAmountUsd, referenceYear, years, yearlyIndexByYear, latestIndexYear, minYear]);
+  }, [cashAmountUsd, referenceYear, years, yearlyIndexByYear, latestIndexYear]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:pb-28">
@@ -154,16 +155,16 @@ export function InflationCalculatorClient({ yearlyIndexByYear, source }: Props) 
                     <Label htmlFor="reference-year">Reference year</Label>
                     <Input
                       id="reference-year"
-                      type="number"
+                      type="text"
                       inputMode="numeric"
-                      min={minYear}
-                      max={latestIndexYear}
-                      value={referenceYear}
-                      onChange={(e) =>
-                        setReferenceYear(
-                          coerceYear(e.target.value, referenceYear, minYear, latestIndexYear),
-                        )
-                      }
+                      autoComplete="off"
+                      spellCheck={false}
+                      maxLength={4}
+                      placeholder={`${minYear}–${latestIndexYear}`}
+                      className="font-mono tabular-nums"
+                      value={buyingYearField.text}
+                      onChange={(e) => buyingYearField.onChange(e.target.value)}
+                      onBlur={buyingYearField.onBlur}
                     />
                     <p className="text-xs text-muted-foreground">
                       Available CPI window {minYear} — {latestIndexYear}.
@@ -197,16 +198,16 @@ export function InflationCalculatorClient({ yearlyIndexByYear, source }: Props) 
                   <Label htmlFor="baseline-year">Baseline calendar year</Label>
                   <Input
                     id="baseline-year"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min={minYear}
-                    max={latestIndexYear}
-                    value={salaryBaselineYear}
-                    onChange={(e) =>
-                      setSalaryBaselineYear(
-                        coerceYear(e.target.value, salaryBaselineYear, minYear, latestIndexYear),
-                      )
-                    }
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={4}
+                    placeholder={`${minYear}–${latestIndexYear}`}
+                    className="font-mono tabular-nums"
+                    value={salaryYearField.text}
+                    onChange={(e) => salaryYearField.onChange(e.target.value)}
+                    onBlur={salaryYearField.onBlur}
                   />
                 </div>
               </CardContent>
@@ -303,19 +304,6 @@ function SummaryStat({ eyebrow, label, value }: { eyebrow: string; label: string
       <p className="mt-2 text-xl font-semibold text-foreground sm:text-[1.4rem]">{value}</p>
     </div>
   );
-}
-
-function clampYear(candidate: number, min: number, max: number) {
-  const n = Number.isFinite(candidate) ? Math.floor(candidate) : min;
-  if (n < min) return min;
-  if (n > max) return max;
-  return n;
-}
-
-function coerceYear(raw: string, fallback: number, min: number, max: number) {
-  const n = Number.parseInt(raw.replace(/[, ]+/g, ""), 10);
-  if (!Number.isFinite(n)) return fallback;
-  return clampYear(n, min, max);
 }
 
 function coerceNumberPositive(raw: string, fallback: number) {
