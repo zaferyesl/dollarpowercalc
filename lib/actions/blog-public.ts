@@ -30,6 +30,26 @@ export async function fetchPublishedPostsPage(pageIndex: number): Promise<{
   return { posts, hasMore: posts.length === BLOG_PAGE_SIZE };
 }
 
+export async function fetchLatestPublishedPosts(limit: number): Promise<BlogPostCard[]> {
+  const n = Math.min(Math.max(1, Math.floor(limit)), 24);
+  const supabase = createPublicSupabaseClient();
+  const nowIso = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, title, slug, description, tags, cover_image, published_at")
+    .not("published_at", "is", null)
+    .lte("published_at", nowIso)
+    .order("published_at", { ascending: false })
+    .limit(n);
+
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as BlogPostCard[]).map((row) => ({
+    ...row,
+    tags: row.tags ?? [],
+  }));
+}
+
 export async function getPublishedPostBySlug(slug: string): Promise<BlogPostRow | null> {
   const supabase = createPublicSupabaseClient();
   const nowIso = new Date().toISOString();

@@ -120,6 +120,7 @@ export async function createPost(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  revalidatePath("/");
   revalidatePath("/blog");
   revalidatePath("/admin");
   return { ok: true as const, id: data!.id as string };
@@ -172,6 +173,7 @@ export async function updatePost(id: string, formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  revalidatePath("/");
   revalidatePath("/blog");
   revalidatePath(`/blog/${slug}`);
   if (oldSlug && oldSlug !== slug) {
@@ -188,6 +190,7 @@ export async function deletePost(id: string) {
   const { error } = await supabase.from("posts").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
+  revalidatePath("/");
   revalidatePath("/blog");
   if (row?.slug) revalidatePath(`/blog/${row.slug}`);
   revalidatePath("/admin");
