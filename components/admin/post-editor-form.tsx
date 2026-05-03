@@ -42,7 +42,8 @@ export function PostEditorForm({ mode, post }: Props) {
         <div>
           <CardTitle>{mode === "create" ? "New post" : "Edit post"}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Paste rich text from external sources — formatting is preserved where safe.
+            Use the visual editor or switch to <strong className="font-medium text-foreground">HTML source</strong> to
+            paste full HTML; unsafe markup is stripped on save.
           </p>
         </div>
         <Link className={cn(buttonVariants({ variant: "outline", size: "sm" }))} href="/admin">
